@@ -237,6 +237,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < servers.size(); ++i) {
             server_list.push_back(servers.get(i).get_str());
         }
+        connections = servers.size();
         assert(!server_list.empty());
         run_client(server_list, port);
     }
