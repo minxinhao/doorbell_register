@@ -339,8 +339,10 @@ namespace sds {
 
     static inline void NotifyTask(int task_id) {
         if (tl_task_pool_enabled) {
+            printf("%d\n",__LINE__);
             TaskPool::Get().notify(task_id);
         }
+        printf("%d\n",__LINE__);
     }
 
     static inline void NotifyAllTasks() {

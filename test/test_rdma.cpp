@@ -162,6 +162,7 @@ void run_client(const std::vector<std::string> &server_list, uint16_t port) {
         qp_count = (nr_threads - qp_num - 1) / -qp_num;
     }
     gettimeofday(&start_tv, NULL);
+    printf("nr_nodes:%lu\n",nr_nodes);
     for (int i = 0; i < nr_nodes; ++i) {
         node[i] = new Initiator();
         node[i]->disable_inline_write();

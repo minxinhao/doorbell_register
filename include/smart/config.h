@@ -109,7 +109,7 @@ namespace sds {
                 private_uuars = total_uuars - shared_uuars;
                 uuar_affinity_enabled = true;
                 shared_cq = config.get("thread_aware_alloc").get("shared_cq").get_bool();
-
+                printf("total_uuars:%u shared_uuars:%u\n",total_uuars,shared_uuars);
                 snprintf(buf, 11, "%d", total_uuars);
                 setenv("MLX5_TOTAL_UUARS", buf, 1);
                 snprintf(buf, 11, "%d", private_uuars);
