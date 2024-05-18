@@ -30,11 +30,11 @@
     "execution_epochs": 60,
     "sample_cycles": 19200000,
     "inf_credit_weight": 1.05,
-    "auto_tuning": true
+    "auto_tuning": false
   },
 
-  "use_conflict_avoidance": true,
-  "use_speculative_lookup": true,
+  "use_conflict_avoidance": false,
+  "use_speculative_lookup": false,
 
   "experimental": {
     "qp_sharing": false

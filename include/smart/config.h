@@ -124,6 +124,7 @@ namespace sds {
 
             enable = config.get("use_work_req_throt").get_bool();
             if (getenv("SMART_OPTS")) {
+                printf("SMART_OPTS\n");
                 std::string str = getenv("SMART_OPTS");
                 enable = (str.find("WorkReqThrot") != str.npos);
             }
