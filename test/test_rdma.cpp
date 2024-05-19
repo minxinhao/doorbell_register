@@ -162,7 +162,7 @@ void run_client(const std::vector<std::string> &server_list, uint16_t port) {
         qp_count = (nr_threads - qp_num - 1) / -qp_num;
     }
     gettimeofday(&start_tv, NULL);
-    printf("nr_nodes:%lu\n",nr_nodes);
+    printf("nr_nodes:%lu qp_count:%d\n",nr_nodes,qp_count);
     for (int i = 0; i < nr_nodes; ++i) {
         node[i] = new Initiator();
         node[i]->disable_inline_write();
@@ -189,6 +189,14 @@ void run_client(const std::vector<std::string> &server_list, uint16_t port) {
         pthread_join(tid[i], NULL);
     }
     pthread_barrier_destroy(&barrier);
+    
+    {
+        double time = (1.0 * end_tv.tv_sec - 1.0 *start_tv.tv_sec) * 1000000 + (1.0 * end_tv.tv_usec - 1.0*start_tv.tv_usec);
+        double iops = total_attempts.load()*1.0;
+        iops = iops/time;
+        printf("total_attempts:%lu time:%lf us iops:%lf MIOPS\n",total_attempts.load(),time,iops);
+    }
+
     elapsed_time = (end_tv.tv_sec - start_tv.tv_sec) * 1.0 +
                    (end_tv.tv_usec - start_tv.tv_usec) / 1000000.0;
     report(elapsed_time);
@@ -205,6 +213,7 @@ int main(int argc, char **argv) {
     const char *env_path = getenv("TEST_RDMA_CONF");
     JsonConfig config = JsonConfig::load_file(env_path ? env_path : ROOT_DIR "/config/test_rdma.json");
     qp_num = (int) config.get("qp_num").get_int64();
+    printf("qp_num:%d ",qp_num);
     if (getenv("QP_NUM")) {
         qp_num = atoi(getenv("QP_NUM"));
     }

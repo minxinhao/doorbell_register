@@ -229,6 +229,8 @@ namespace sds {
     int Initiator::add_request(ibv_wr_opcode opcode, const void *local, const GlobalAddress &remote, size_t length,
                                uint64_t compare_add, uint64_t swap, int flags) {
         auto &req_buf = tl_data_[GetThreadID()].req_buf[GetTaskID()];
+        // if(GetThreadID()==23) 
+        //     printf("add_request thread_id:%d task_id:%d req_buf:size:%d\n",GetThreadID(),GetTaskID(),req_buf.size);
         assert(remote.node < manager_.config().max_nodes);
         assert((uint64_t) local >= (uint64_t) cache_ && (uint64_t) local < (uint64_t) cache_ + cache_size_);
         uint32_t rkey;
@@ -238,6 +240,7 @@ namespace sds {
         }
 
         if (req_buf.size && req_buf.mem_node_id != remote.node) {
+            printf("thread_id:%d task_id:%d sync-1\n",GetThreadID(),GetTaskID());
             if (sync()) {
                 return -1;
             }
@@ -246,6 +249,7 @@ namespace sds {
 
         int idx = req_buf.size;
         if (req_buf.size + 1 == RequestBuffer::kCapacity) {
+            printf("thread_id:%d task_id:%d sync-2\n",GetThreadID(),GetTaskID());
             if (sync()) {
                 return -1;
             }
@@ -277,7 +281,7 @@ namespace sds {
             wr.wr.rdma.remote_addr = remote_va + remote.offset;
         }
         if (opcode == IBV_WR_RDMA_WRITE && length <= manager_.config().max_inline_data) {
-            wr.send_flags |= IBV_SEND_INLINE;
+            // wr.send_flags |= IBV_SEND_INLINE;
         }
         if (idx > 0) {
             req_buf.wr_list[idx - 1].next = &wr;
@@ -311,9 +315,12 @@ namespace sds {
         auto &tl = tl_data_[GetThreadID()];
         auto &req_buf = tl.req_buf[GetTaskID()];
         auto &state = tl.qp_state;
+    //    if(GetThreadID()==23)
+    //         printf("post_request: thread_id:%d task_id:%d req_buf:size:%d\n",GetThreadID(),GetTaskID(),req_buf.size);
         if (!req_buf.size) {
             return 0;
         }
+        memset(&req_buf.wr_list[0],0,sizeof(ibv_send_wr));
         int wr_size = req_buf.size;
         if (!manager_.config().qp_sharing && manager_.config().throttler) {
             decrease_credit(req_buf.size);
@@ -321,6 +328,8 @@ namespace sds {
         req_buf.wr_list[req_buf.size - 1].wr_id = MAKE_WR_ID(req_buf.mem_node_id, wr_size);
         req_buf.wr_list[req_buf.size - 1].send_flags |= IBV_SEND_SIGNALED;
         int qp_idx = GetThreadID() % manager_.get_qp_size(req_buf.mem_node_id);
+    //    if(GetThreadID()==23)
+    //         printf("thread_id:%d task_id:%d post send to qp:%d\n",GetThreadID(),GetTaskID(),qp_idx);
         if (manager_.post_send(req_buf.mem_node_id, qp_idx, req_buf.wr_list)) {
             return -1;
         }
@@ -385,18 +394,30 @@ namespace sds {
         auto &post_req = tl.post_req_snapshot[GetTaskID()];
         post_req.resize(state.post_req.size());
         for (int id = 0; id < post_req.size(); ++id) {
+            // if(GetThreadID()==23)
+            //     printf("sync thread_id:%d task_id:%d post_req:id[%d],size:%lu\n",GetThreadID(),GetTaskID(),id,state.post_req[id]);
             post_req[id] = state.post_req[id];
         }
         for (int id = 0; id < post_req.size(); ++id) {
             while (state.ack_req[id] < post_req[id]) {
+                // if(GetThreadID()==23)
+                //     printf("sync thread_id:%d task_id:%d state.ack_req[%d]:%lu post_req[%d]:%lu\n",GetThreadID(),GetTaskID(),id,state.ack_req[id],id,post_req[id]);
                 if (TaskPool::IsEnabled()) {
+                    // if(GetThreadID()==23)
+                    //      printf("sync thread_id:%d task_id:%d wait_task",GetThreadID(),GetTaskID());
                     WaitTask();
                 } else {
+                    // if(GetThreadID()==23)
+                    //      printf("sync thread_id:%d task_id:%d poll_once(%d) start\n",GetThreadID(),GetTaskID(),id);
                     if (poll_once(id) < 0) {
                         return -1;
                     }
+                    // if(GetThreadID()==23)
+                    //      printf("sync thread_id:%d task_id:%d poll_once(%d) end\n",GetThreadID(),GetTaskID(),id);
                 }
             }
+            // if(GetThreadID()==23)
+            //         printf("sync end thread_id:%d task_id:%d state.ack_req[%d]:%lu post_req[%d]:%lu\n",GetThreadID(),GetTaskID(),id,state.ack_req[id],id,post_req[id]);
         }
         return 0;
     }
@@ -411,6 +432,8 @@ namespace sds {
         std::vector<uint64_t> wr_id_list;
         int qp_idx = GetThreadID() % manager_.get_qp_size(mem_node_id);
         int rc = manager_.do_poll(mem_node_id, qp_idx, wr_id_list);
+        // if(GetThreadID()==23)
+        //     printf("poll thread_id:%d task_id:%d poll:%d\n", GetThreadID(), GetTaskID(), rc);
         if (rc < 0) {
             return -1;
         }
@@ -436,6 +459,8 @@ namespace sds {
                 state.ack_req[MEM_NODE_ID(wr_id)] += size;
                 total_ack += size;
                 state.inflight_ack -= size;
+                // if(GetThreadID()==23)
+                //     printf("poll thread_id:%d task_id:%d wr_size:%d total_ack:%d state.inflight_ack:%lu notify:%s\n", GetThreadID(), GetTaskID(), size,total_ack, state.inflight_ack,notify?"true":"false");
                 if (notify) {
                     auto &post_req = tl.post_req_snapshot[TASK_ID(wr_id)];
                     if (!post_req.empty() && state.ack_req[node_id] >= post_req[node_id]) {
@@ -443,6 +468,8 @@ namespace sds {
                     }
                 }
             }
+            // if(GetThreadID()==23)
+            //         printf("poll thread_id:%d task_id:%d total_ack:%d manager_.config().throttler:%s\n", GetThreadID(), GetTaskID(),total_ack,manager_.config().throttler?"enbale":"disable");
             if (total_ack && manager_.config().throttler) {
                 increase_credit(total_ack);
             }
