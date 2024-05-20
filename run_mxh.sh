@@ -9,7 +9,7 @@ if [ "$1" = "server" ]; then
     # ./test/test_rdma
 else
     # test_rdma [nr_thread] [outstanding_work_request_per_thread]
-    LD_PRELOAD=../libmlx5.so ./test_rdma $1 $2
-    # LD_PRELOAD=libmlx5.so ./test_rdma $1 $2
+    # LD_PRELOAD=../libmlx5.so ./test_rdma $1 $2
+    LD_PRELOAD=libmlx5.so ./test_rdma $1 $2
     # ./test_rdma $1 $2
 fi

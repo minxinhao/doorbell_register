@@ -19,10 +19,10 @@
   "thread_aware_alloc": {
     "total_uuar": 100,
     "shared_uuar": 96,
-    "shared_cq": true
+    "shared_cq": false
   },
 
-  "use_work_req_throt": true,
+  "use_work_req_throt": false,
   "work_req_throt": {
     "initial_credit": 4,
     "max_credit": 12,
