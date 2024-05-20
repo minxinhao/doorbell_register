@@ -60,8 +60,8 @@ namespace sds {
         
     public:
         SmartConfig() {
-            throttler = true;
-            // throttler = false;
+            // throttler = true;
+            throttler = false;
             const char *path = getenv("SMART_CONFIG_PATH");
             JsonConfig config = JsonConfig::load_file(path ? path : ROOT_DIR "/config/smart_config.json");
             char buf[11];

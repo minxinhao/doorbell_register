@@ -64,7 +64,7 @@ std::string dump_prefix;
 std::string type;
 
 std::atomic<uint64_t> total_attempts(0);
-std::atomic_bool stop_signal(false);
+volatile int stop_signal = 0;
 pthread_barrier_t barrier;
 Initiator *node[32];
 
@@ -96,7 +96,7 @@ void *test_thread_func(void *arg) {
             }
         }
     } else if (type == "write") {
-        while (!stop_signal.load(std::memory_order::memory_order_relaxed)) {
+        while (!stop_signal) {
             attempts++;
             uint64_t offset = thread_id * kSegmentSize + block_size * (dist(rnd));
             GlobalAddress remote_addr(attempts % connections, offset);
@@ -182,7 +182,7 @@ void run_client(const std::vector<std::string> &server_list, uint16_t port) {
     pthread_barrier_wait(&barrier);
     gettimeofday(&start_tv, NULL);
     sleep(15);
-    stop_signal.store(true);
+    stop_signal = 1;
     pthread_barrier_wait(&barrier);
     gettimeofday(&end_tv, NULL);
     for (int i = 0; i < nr_threads; ++i) {
@@ -190,12 +190,12 @@ void run_client(const std::vector<std::string> &server_list, uint16_t port) {
     }
     pthread_barrier_destroy(&barrier);
     
-    {
-        double time = (1.0 * end_tv.tv_sec - 1.0 *start_tv.tv_sec) * 1000000 + (1.0 * end_tv.tv_usec - 1.0*start_tv.tv_usec);
-        double iops = total_attempts.load()*1.0;
-        iops = iops/time;
-        printf("total_attempts:%lu time:%lf us iops:%lf MIOPS\n",total_attempts.load(),time,iops);
-    }
+    // {
+    //     double time = (1.0 * end_tv.tv_sec - 1.0 *start_tv.tv_sec) * 1000000 + (1.0 * end_tv.tv_usec - 1.0*start_tv.tv_usec);
+    //     double iops = total_attempts.load()*1.0;
+    //     iops = iops/time;
+    //     printf("total_attempts:%lu time:%lf us iops:%lf MIOPS\n",total_attempts.load(),time,iops);
+    // }
 
     elapsed_time = (end_tv.tv_sec - start_tv.tv_sec) * 1.0 +
                    (end_tv.tv_usec - start_tv.tv_usec) / 1000000.0;
@@ -247,7 +247,6 @@ int main(int argc, char **argv) {
         for (int i = 0; i < servers.size(); ++i) {
             server_list.push_back(servers.get(i).get_str());
         }
-        connections = servers.size();
         assert(!server_list.empty());
         run_client(server_list, port);
     }

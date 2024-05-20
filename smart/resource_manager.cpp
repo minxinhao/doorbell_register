@@ -389,7 +389,7 @@ namespace sds {
     int ResourceManager::send_local_info(RemoteNode &node, int fd, int qp_size) {
         ExchangeMessage msg;
         const size_t msg_size = sizeof(ExchangeMessage);
-        printf("node.qp_size:%d\n",node.qp_size);
+        // printf("node.qp_size:%d\n",node.qp_size);
         if (!node.qp_size) {
             assert(qp_size > 0);
             node.qp_size = qp_size;
@@ -399,7 +399,7 @@ namespace sds {
             }
             for (int i = 0; i < node.qp_size; ++i) {
                 node.qp_list[i] = allocate_queue_pair(i);
-                printf("node.qp_list[%d] allocate qp:%lx \n",i,(uint64_t)node.qp_list[i]);
+                // printf("node.qp_list[%d] allocate qp:%lx \n",i,(uint64_t)node.qp_list[i]);
                 if (!node.qp_list[i]) {
                     return -1;
                 }
@@ -541,8 +541,8 @@ namespace sds {
         attr.qp_type = IBV_QPT_RC;
         attr.cap.max_send_wr = attr.cap.max_recv_wr = config_.max_wqe_size;
         attr.cap.max_send_sge = attr.cap.max_recv_sge = config_.max_sge_size;
-        // attr.cap.max_inline_data = config_.max_inline_data;
-        attr.cap.max_inline_data = 0;
+        attr.cap.max_inline_data = config_.max_inline_data;
+        // attr.cap.max_inline_data = 0;
         qp = ibv_create_qp(ib_pd_, &attr);
         if (!qp) {
             SDS_PERROR("ibv_create_qp");
@@ -555,7 +555,7 @@ namespace sds {
         // if (class_id < 0) {
         //     return -1;
         // }
-        printf("push qp:%lx to class:%u\n",(uint64_t)(entry),class_id);
+        // printf("push qp:%lx to class:%u\n",(uint64_t)(entry),class_id);
         entry->next = resource_.free_list[class_id];
         resource_.free_list[class_id] = entry;
         resource_.qp_list.push_back(entry);

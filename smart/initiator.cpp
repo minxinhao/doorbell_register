@@ -320,7 +320,6 @@ namespace sds {
         if (!req_buf.size) {
             return 0;
         }
-        memset(&req_buf.wr_list[0],0,sizeof(ibv_send_wr));
         int wr_size = req_buf.size;
         if (!manager_.config().qp_sharing && manager_.config().throttler) {
             decrease_credit(req_buf.size);

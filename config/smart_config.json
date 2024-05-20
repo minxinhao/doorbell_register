@@ -9,17 +9,17 @@
     "max_cqe_size": 256,
     "max_wqe_size": 256,
     "max_sge_size": 1,
-    "max_inline_data": 0
+    "max_inline_data": 64
   },
 
   "max_nodes": 128,
   "initiator_cache_size": 4096,
 
-  "use_thread_aware_alloc": true,
+  "use_thread_aware_alloc": false,
   "thread_aware_alloc": {
     "total_uuar": 100,
     "shared_uuar": 96,
-    "shared_cq": false
+    "shared_cq": true
   },
 
   "use_work_req_throt": false,
@@ -33,8 +33,8 @@
     "auto_tuning": true
   },
 
-  "use_conflict_avoidance": false,
-  "use_speculative_lookup": false,
+  "use_conflict_avoidance": true,
+  "use_speculative_lookup": true,
 
   "experimental": {
     "qp_sharing": false
